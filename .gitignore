@@ -1,0 +1,6 @@
+# Upstream clone of mxgmn/WaveFunctionCollapse, used by garden/ for the C# engine
+WaveFunctionCollapse/
+# Early renders from the first prototype
+previews/
+__pycache__/
+.DS_Store

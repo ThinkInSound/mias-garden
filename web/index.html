@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mia's Garden</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="A garden that grows itself, plot by plot.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jacquarda+Bastarda+9&family=Pixelify+Sans:wght@400;600&family=Silkscreen&display=swap">
+<style>
+/* Layout: an illuminated vellum leaf on top, the gardener's controls beside the
+   growing plate, then a dedication. Hard pixel edges throughout. */
+:root {
+  --page: #E7DFCF; --page-text: #2E2520; --page-muted: #5E4A3A;
+  --vellum: #F4F1EA; --vellum-2: #E8D8C0; --ink: #2E2520; --muted: #6A4E3C;
+  --forest: #1E3B28; --fern: #4A7543; --rose: #8E1A2B; --rose-hi: #C8323F;
+  --gold: #B5853A; --gold-hi: #E6C373; --shadow: #2E2520;
+  --display: "Jacquarda Bastarda 9", "UnifrakturMaguntia", "Old English Text MT", Georgia, serif;
+  --ui: "Pixelify Sans", ui-monospace, Menlo, monospace;
+  --label: "Silkscreen", ui-monospace, Menlo, monospace;
+  --px: 3px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --page: #161A17; --page-text: #EDE4D3; --page-muted: #B9A98F; --shadow: #050605; color-scheme: dark; } }
+:root[data-theme="dark"] { --page: #161A17; --page-text: #EDE4D3; --page-muted: #B9A98F; --shadow: #050605; color-scheme: dark; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--page); color: var(--page-text); font: 17px/1.5 var(--ui); }
+canvas { image-rendering: crisp-edges; image-rendering: pixelated; display: block; }
+button, input[type="range"] { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.leaf { max-width: 1120px; margin: 0 auto; padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 40px; }
+
+/* Vellum panels keep their parchment in both themes, like pages laid on a desk. */
+.vellum { background: var(--vellum); color: var(--ink);
+  border: var(--px) solid var(--ink);
+  box-shadow: 0 0 0 var(--px) var(--gold), calc(var(--px) * 3) calc(var(--px) * 3) 0 var(--px) var(--shadow); }
+
+.vine, .curl, .divider, .urn { background-repeat: no-repeat; image-rendering: pixelated; background-size: var(--ow) var(--oh); }
+.vine { height: var(--oh, 36px); background-repeat: repeat-x; background-position: center; }
+.divider { height: var(--oh, 33px); background-position: center; }
+/* The urn takes up whatever height the panel has spare, so the sidebar stays balanced. */
+.urn { flex: 1 1 auto; min-height: var(--oh, 120px); background-position: center; }
+/* The urn is also a toggle: pressed, the garden keeps resowing itself. */
+.urn, .urn:hover, .urn[aria-pressed="true"] { padding: 0; border: 0; box-shadow: none; background-color: transparent;
+  background-repeat: no-repeat; background-position: center; background-size: var(--ow) var(--oh); }
+.urn[aria-pressed="true"] { animation: bob 1.4s steps(1, end) infinite; }
+@keyframes bob { 50% { background-position: center calc(50% - var(--px) * 2); } }
+
+/* ------------------------------------------------------------ illumination */
+.illumination { position: relative; padding: 20px clamp(16px, 5vw, 64px); display: grid; gap: 14px; }
+.curl { position: absolute; width: var(--ow, 84px); height: var(--oh, 84px); }
+.curl.tl { top: 6px; left: 6px; }
+.curl.tr { top: 6px; right: 6px; transform: scaleX(-1); }
+.curl.bl { bottom: 6px; left: 6px; transform: scaleY(-1); }
+.curl.br { bottom: 6px; right: 6px; transform: scale(-1, -1); }
+.illumination .vine { margin-inline: 70px; }
+.title-block { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px 22px; align-items: end; padding-inline: 28px; }
+h1 { margin: 0; display: flex; align-items: flex-end; gap: 4px; min-width: 0; }
+.dropcap canvas { width: 132px; height: 132px; }
+.title-rest { font: 400 81px/0.9 var(--display); color: var(--forest); letter-spacing: 1px;
+  text-shadow: var(--px) var(--px) 0 var(--gold-hi); padding-bottom: 4px; }
+.poem { display: grid; gap: 6px; margin-top: 10px; max-width: 92ch; }
+.poem p { margin: 0; padding-left: 1.6em; text-indent: -1.6em; font-size: 18px; line-height: 1.5; color: var(--ink); text-wrap: pretty; }
+.anaphora { color: var(--rose); font-weight: 600; }
+
+/* ------------------------------------------------------------ workbench */
+.bench { display: grid; grid-template-columns: minmax(270px, 320px) minmax(0, 1fr); gap: 36px; align-items: stretch; }
+.controls { padding: 20px 20px 22px; display: flex; flex-direction: column; gap: 17px; }
+.controls .divider { margin-top: -6px; }
+h2 { margin: 0; font: 400 36px/1 var(--display); color: var(--forest); text-wrap: balance; }
+.page-h2 { color: var(--page-text); }
+
+.dial { display: grid; gap: 6px; }
+.dial label { font: 400 12px/1.3 var(--label); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); }
+.dial .reading { font-size: 15px; font-weight: 600; color: var(--rose); }
+
+input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 30px; margin: 0; background: transparent; cursor: pointer; }
+input[type="range"]::-webkit-slider-runnable-track { height: 9px; background: var(--vellum-2); box-shadow: inset 0 0 0 var(--px) var(--ink); }
+input[type="range"]::-moz-range-track { height: 9px; background: var(--vellum-2); box-shadow: inset 0 0 0 var(--px) var(--ink); }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 27px; height: 27px; margin-top: -9px; border: 0;
+  background: var(--thumb, var(--rose-hi)) center / 27px 27px no-repeat; image-rendering: pixelated; }
+input[type="range"]::-moz-range-thumb { width: 27px; height: 27px; border: 0; border-radius: 0;
+  background: var(--thumb, var(--rose-hi)) center / 27px 27px no-repeat; image-rendering: pixelated; }
+input[type="range"]:focus-visible { outline: var(--px) dashed var(--gold); outline-offset: 2px; }
+
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; }
+legend { padding: 0; margin-bottom: 8px; font: 400 12px/1.3 var(--label); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); }
+.pace { display: grid; grid-template-columns: repeat(4, 1fr); }
+.pace button { padding: 7px 2px; font: 400 13px/1 var(--ui); }
+
+button { font: 600 16px/1 var(--ui); color: var(--ink); background: var(--vellum-2); border: var(--px) solid var(--ink);
+  box-shadow: var(--px) var(--px) 0 var(--ink); padding: 11px 14px; cursor: pointer; }
+button:hover { background: var(--gold-hi); }
+button:active { transform: translate(var(--px), var(--px)); box-shadow: none; }
+button:focus-visible { outline: var(--px) dashed var(--gold); outline-offset: 3px; }
+button[aria-pressed="true"] { background: var(--rose-hi); color: var(--vellum); text-shadow: 1px 1px 0 var(--rose); }
+#sow { background: var(--forest); color: var(--vellum); font-size: 18px; }
+/* On wide screens the urn and button stack as part of the panel; narrow screens put them side by side. */
+.sow-row { display: contents; }
+/* Sliders and pace fold away (animated by app.js) while the garden keeps growing on its own. */
+.dials { display: flex; flex-direction: column; gap: inherit; }
+/* Phones and tablets grow at the slow pace only. */
+:root[data-device="mobile"] .pace-field { display: none; }
+#sow:hover { background: var(--fern); }
+
+
+/* The plate keeps one size whatever the grid: it fills its column as a square,
+   so its right edge lines up with the header and the canvas scales inside it. */
+.plate-wrap { min-width: 0; align-self: start; }
+#plate-box { position: relative; width: 100%; aspect-ratio: 1 / 1; padding: calc(var(--px) * 4); background: var(--vellum-2);
+  border: var(--px) solid var(--ink);
+  box-shadow: inset 0 0 0 var(--px) var(--gold), inset 0 0 0 calc(var(--px) * 2) var(--gold-hi),
+              inset 0 0 0 calc(var(--px) * 3) var(--gold), inset 0 0 0 calc(var(--px) * 4) var(--ink),
+              calc(var(--px) * 3) calc(var(--px) * 3) 0 var(--px) var(--shadow); }
+#plate-box::after { content: ""; position: absolute; inset: calc(var(--px) * -3); pointer-events: none; image-rendering: pixelated;
+  background: var(--rosette) left top, var(--rosette) right top, var(--rosette) left bottom, var(--rosette) right bottom;
+  background-size: calc(var(--px) * 5) calc(var(--px) * 5); background-repeat: no-repeat; }
+#plate { width: 100%; height: 100%; }
+
+
+
+footer { margin: -12px auto 0; max-width: 40ch; text-align: center; font: 400 27px/1.3 var(--display); color: var(--rose); text-wrap: balance; }
+
+@media (max-width: 900px) {
+  .bench { grid-template-columns: 1fr; }
+  .plate-wrap { order: -1; }
+  /* Stacked: keep the whole plate on screen, even on a phone held sideways. */
+  #plate-box { max-width: min(100%, 86vh); max-width: min(100%, 86svh); margin-inline: auto; }
+  /* Compact controls under the garden. */
+  .controls { gap: 12px; padding: 16px 16px 18px; }
+  .controls .divider { height: 22px; background-size: 160px 22px; margin-top: -4px; }
+  .dial { grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 0 10px; }
+  .dial label { grid-area: 1 / 1; }
+  .dial .reading { grid-area: 1 / 2; font-size: 14px; }
+  .dial input { grid-area: 2 / 1 / 3 / 3; }
+  .sow-row { display: flex; align-items: center; gap: 14px; margin-top: 4px; }
+  .controls .urn, .controls .urn:hover, .controls .urn[aria-pressed="true"] { flex: 0 0 88px; min-height: 80px; background-size: 88px 80px; }
+  #sow { flex: 1 1 auto; }
+}
+@media (max-width: 560px) {
+  :root { --px: 2px; }
+  .dropcap canvas { width: 88px; height: 88px; }
+  .title-rest { font-size: 36px; }
+  h2 { font-size: 27px; }
+  footer { font-size: 22px; }
+  .poem p { font-size: 16px; }
+  .title-block { padding-inline: 4px; }
+  .illumination { padding-top: 44px; padding-bottom: 44px; }
+  .illumination .vine { margin-inline: 40px; height: 24px; background-size: 64px 24px; }
+  .curl { width: 56px; height: 56px; background-size: 56px 56px; }
+}
+/* Touch screens (tagged by app.js): larger targets, same pixel art drawn at 4x. */
+:root[data-input="touch"] input[type="range"] { height: 44px; }
+:root[data-input="touch"] input[type="range"]::-webkit-slider-thumb { width: 36px; height: 36px; margin-top: -13.5px; background-size: 36px 36px; }
+:root[data-input="touch"] input[type="range"]::-moz-range-thumb { width: 36px; height: 36px; background-size: 36px 36px; }
+:root[data-input="touch"] .pace button { min-height: 44px; }
+:root[data-input="touch"] #sow { min-height: 52px; }
+@media (prefers-reduced-motion: reduce) {
+  button:active { transform: none; }
+  .urn[aria-pressed="true"] { animation: none; outline: var(--px) dotted var(--gold); outline-offset: -6px; }
+}
+</style>
+</head>
+<body>
+<div class="leaf">
+  <header class="illumination vellum">
+    <div class="curl tl" aria-hidden="true"></div>
+    <div class="curl tr" aria-hidden="true"></div>
+    <div class="curl bl" aria-hidden="true"></div>
+    <div class="curl br" aria-hidden="true"></div>
+    <div class="vine" aria-hidden="true"></div>
+    <div class="title-block">
+      <h1><span class="sr-only">Mia's Garden</span><span id="dropcap" class="dropcap" aria-hidden="true"></span><span class="title-rest" aria-hidden="true">ia's Garden</span></h1>
+      <div class="poem">
+        <p><span class="anaphora">Let us</span> pick apples naked under the moonlight.</p>
+        <p><span class="anaphora">Let us</span> feast on the flesh of the new born plum.</p>
+        <p><span class="anaphora">Let us</span> dance to the music of our children.</p>
+        <p><span class="anaphora">Let us</span> bray and whine and be calmed by each other’s caress.</p>
+        <p><span class="anaphora">Let us</span> laugh and tell stories until our tongues get tired and our cheeks get bruised.</p>
+        <p><span class="anaphora">Let us</span> touch and feel the breathlessness of falling through the sky.</p>
+      </div>
+    </div>
+    <div class="vine" aria-hidden="true"></div>
+  </header>
+
+  <main class="bench">
+    <section class="controls vellum" aria-labelledby="hand-h">
+      <h2 id="hand-h">The Gardener's Hand</h2>
+      <div class="divider" aria-hidden="true"></div>
+
+      <div class="dials" id="dials">
+        <div class="dial">
+          <label for="roses">The Whisper of Roses</label>
+          <input type="range" id="roses" min="0" max="100" step="1" value="50">
+          <div class="reading" id="roses-word">a whisper</div>
+        </div>
+        <div class="dial">
+          <label for="lilies">Abundance of Lilies</label>
+          <input type="range" id="lilies" min="0" max="100" step="1" value="50">
+          <div class="reading" id="lilies-word">a fair few</div>
+        </div>
+        <div class="dial">
+          <label for="stature">Stature of the Bloom</label>
+          <input type="range" id="stature" min="0" max="100" step="1" value="50">
+          <div class="reading" id="stature-word">in bloom</div>
+        </div>
+
+        <fieldset class="pace-field">
+          <legend>Pace of growth</legend>
+          <div class="pace">
+            <button type="button" data-pace="leisurely">Slow</button>
+            <button type="button" data-pace="steady">Steady</button>
+            <button type="button" data-pace="brisk">Brisk</button>
+            <button type="button" data-pace="instant">At once</button>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="sow-row">
+        <button type="button" class="urn" id="urn" aria-pressed="false" aria-label="Keep the garden growing"></button>
+        <button type="button" id="sow">Sow anew</button>
+      </div>
+
+    </section>
+
+    <section class="plate-wrap" aria-label="The garden">
+      <div id="plate-box"><canvas id="plate" width="320" height="320" role="img" aria-label="The generated garden"></canvas></div>
+    </section>
+  </main>
+
+  <div class="divider" aria-hidden="true"></div>
+
+
+  <footer>Made to help a very special pony find her way back</footer>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
